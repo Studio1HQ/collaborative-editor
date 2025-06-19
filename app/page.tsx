@@ -1,5 +1,6 @@
 import { auth0 } from "@/lib/auth0";
 import "./globals.css";
+import Link from "next/link";
 
 export default async function Home() {
   const session = await auth0.getSession();
@@ -16,16 +17,16 @@ export default async function Home() {
             team in real-time.
           </p>
           <div className="space-y-4">
-            <a href="/auth/login?screen_hint=signup" className="block">
+            <Link href="/auth/login?screen_hint=signup" className="block">
               <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors">
                 Sign up
               </button>
-            </a>
-            <a href="/auth/login" className="block">
+            </Link>
+            <Link href="/auth/login" className="block">
               <button className="w-full border border-gray-300 hover:border-gray-400 text-gray-700 font-medium py-2 px-4 rounded-md transition-colors">
                 Log in
               </button>
-            </a>
+            </Link>
           </div>
         </div>
       </main>
@@ -40,11 +41,18 @@ export default async function Home() {
             <h1 className="text-2xl font-bold text-gray-800">
               Welcome, {session.user.name}!
             </h1>
-            <a href="/auth/logout">
-              <button className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-md transition-colors">
-                Log out
-              </button>
-            </a>
+            <div className="flex gap-4">
+              <Link href="/editors">
+                <button className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors">
+                  Go to Editors
+                </button>
+              </Link>
+              <Link href="/auth/logout">
+                <button className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-md transition-colors">
+                  Log out
+                </button>
+              </Link>
+            </div>
           </div>
           <p className="text-gray-600">
             Start collaborating on your documents in real-time.

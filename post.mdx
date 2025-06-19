@@ -67,7 +67,8 @@ Auth0 will handle user authentication, allowing users to log in and access the c
 
 Create a `.env.local` file with the following content:
 
-```env
+```bash
+# .env.local
 AUTH0_SECRET='LONG_RANDOM_STRING'
 APP_BASE_URL='http://localhost:3000'
 AUTH0_DOMAIN='https://YOUR_DOMAIN.auth0.com'
@@ -77,7 +78,7 @@ AUTH0_CLIENT_SECRET='YOUR_CLIENT_SECRET'
 
 #### Create an Auth0 Application
 
-To set up Auth0, you'll need to create an application in your Auth0 dashboard. Log in to your Auth0 dashboard and on the side panel, select **Applications** > **Applications**, then click **Create Application**. Give your application a name, choose **Regular Web Application**, and click **Create**. Then select **Next.js** as the technology.
+To set up [Auth0](https://auth0.com/), you'll need to create an application in your Auth0 dashboard. Log in to your Auth0 dashboard and on the side panel, select **Applications** > **Applications**, then click **Create Application**. Give your application a name, choose **Regular Web Application**, and click **Create**. Then select **Next.js** as the technology.
 
 Next, select **Settings** and copy the following values into your `.env.local`:
 
@@ -92,6 +93,7 @@ Make sure to set the **Allowed Callback URLs** to `http://localhost:3000/auth/ca
 Create a new file `lib/auth0.ts` to handle authentication, sessions and user data:
 
 ```ts
+// lib/auth0.ts
 import { Auth0Client } from "@auth0/nextjs-auth0/server";
 
 export const auth0 = new Auth0Client();
@@ -102,6 +104,7 @@ export const auth0 = new Auth0Client();
 Create a new file `middleware.ts` to handle authentication middleware:
 
 ```ts
+// middleware.ts
 import type { NextRequest } from "next/server";
 import { auth0 } from "./lib/auth0";
 
@@ -121,8 +124,10 @@ export const config = {
 Update file `app/page.tsx` to handle the home page with login and signup buttons:
 
 ```tsx
+// app/page.tsx
 import { auth0 } from "@/lib/auth0";
 import "./globals.css";
+import Link from "next/link";
 
 export default async function Home() {
   const session = await auth0.getSession();
@@ -139,16 +144,16 @@ export default async function Home() {
             team in real-time.
           </p>
           <div className="space-y-4">
-            <a href="/auth/login?screen_hint=signup" className="block">
+            <Link href="/auth/login?screen_hint=signup" className="block">
               <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors">
                 Sign up
               </button>
-            </a>
-            <a href="/auth/login" className="block">
+            </Link>
+            <Link href="/auth/login" className="block">
               <button className="w-full border border-gray-300 hover:border-gray-400 text-gray-700 font-medium py-2 px-4 rounded-md transition-colors">
                 Log in
               </button>
-            </a>
+            </Link>
           </div>
         </div>
       </main>
@@ -163,11 +168,18 @@ export default async function Home() {
             <h1 className="text-2xl font-bold text-gray-800">
               Welcome, {session.user.name}!
             </h1>
-            <a href="/auth/logout">
-              <button className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-md transition-colors">
-                Log out
-              </button>
-            </a>
+            <div className="flex gap-4">
+              <Link href="/editors">
+                <button className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors">
+                  Go to Editors
+                </button>
+              </Link>
+              <Link href="/auth/logout">
+                <button className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-md transition-colors">
+                  Log out
+                </button>
+              </Link>
+            </div>
           </div>
           <p className="text-gray-600">
             Start collaborating on your documents in real-time.
@@ -179,43 +191,139 @@ export default async function Home() {
 }
 ```
 
-Running this code will give you a simple home page with options to log in or sign up. Once logged in, users will see a welcome message and a logout button.
+Running this code will give you a simple home page with options to log in or sign up. Once logged in, users will see a welcome message, a button to go to the editors page, and a logout button.
+
+#### Create an AuthProvider
+
+To protect routes and ensure only authenticated users can access certain pages, create a reusable AuthProvider component:
+
+```tsx
+// providers/AuthProvider.tsx
+"use client";
+import { useUser } from "@auth0/nextjs-auth0";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+
+export default function AuthProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const { user, isLoading } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push("/");
+    }
+  }, [user, isLoading, router]);
+
+  if (isLoading) return <div>Loading...</div>;
+  if (!user) return null;
+
+  return <>{children}</>;
+}
+```
+
+Use this AuthProvider to wrap any page that requires authentication. For example, in your `app/editor/page.tsx`, you can use it like this:
+
+```tsx
+// app/editor/page.tsx
+"use client";
+import AuthProvider from "@/providers/AuthProvider";
+
+const Page = () => {
+  return (
+    <AuthProvider>
+      <h1>Editor&apos;s Page</h1>
+    </AuthProvider>
+  );
+};
+
+export default Page;
+```
+
+This ensures that unauthenticated users are redirected to the home page where they can log in. You can test this by trying to access the `/editor` page without being logged in.
 
 ### 4. Configure Velt.dev
 
-Create a project in [Velt.dev](https://velt.dev), get your **project ID**, and add it to `.env.local`:
+Velt.dev provides a powerful API for real-time collaboration, including live cursors, comments, and presence. To integrate Velt.dev into your Next.js app, follow these steps:
 
-```env
-VELT_PROJECT_ID=your-velt-project-id
+#### Get Your Velt API Key
+
+To use Velt.dev, you'll need to create an account and get your API key.
+
+Visit [https://velt.dev/](https://velt.dev/) to create an account and get your API key. Once you have your API key, include it in your .env.local file:
+
+```bash
+NEXT_PUBLIC_VELT_API_KEY='YOUR_VELT_API_KEY'
 ```
 
-We'll initialize Velt on the client side later using this ID.
+#### Add your Domain to Velt
 
-## 🛠️ Implementation
+In your Velt dashboard, navigate to **Configuration** > **App Configuration** and add your development domain (e.g., `localhost`). This allows Velt to recognize requests from your Next.js app.
 
-Now let's build the collaborative document page.
+#### Velt Provider Setup
 
-### 1. Auth0 Integration with App Router
-
-Wrap your app in the Auth0 provider.
-
-#### `app/layout.tsx`
+To use Velt.dev in your Next.js app, you need to wrap your application with the `VeltProvider`. Create a separate provider component to keep your code organized:
 
 ```tsx
-import { UserProvider } from "@auth0/nextjs-auth0/client";
+// providers/VeltReactProvider.tsx
+"use client";
 
-export default function RootLayout({ children }) {
+import { VeltProvider } from "@veltdev/react";
+import React from "react";
+
+const VeltReactProvider = ({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) => {
+  return (
+    <VeltProvider apiKey={process.env.NEXT_PUBLIC_VELT_API_KEY!}>
+      {children}
+    </VeltProvider>
+  );
+};
+
+export default VeltReactProvider;
+```
+
+Then update your `app/layout.tsx` to use this provider:
+
+```tsx
+// app/layout.tsx
+import VeltReactProvider from "@/providers/VeltReactProvider";
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html lang="en">
       <body>
-        <UserProvider>{children}</UserProvider>
+        <VeltReactProvider>{children}</VeltReactProvider>
       </body>
     </html>
   );
 }
 ```
 
-### 2. Setup the Document Editor Page
+This setup allows you to access Velt's collaboration features throughout your app.
+
+#### Syncing Velt with your Auth0 User
+
+To ensure Velt knows who the authenticated user is, you need to pass the Auth0 user data to Velt. This is typically done in a `useEffect` hook after the user logs in.
+
+Velt provides two ways to handle user identity:
+
+1. **Backend Sync (REST API)**: Syncing users to Velt whenever a new user is added or removed in your Firebase app using the REST API. This method keeps a permanent record of users in Velt's database.
+2. **Frontend Contact List**: Providing the contact list directly in the frontend using the `updateContactList` method. This approach is simpler for demos and smaller applications.
+
+For our article, we'll use the second approach as it's more straightforward to implement, doesn't require backend API calls, and works perfectly for demonstration purposes.
+
+### 5. Setup the Document Editor Page
 
 Create `app/editor/page.tsx`.
 
