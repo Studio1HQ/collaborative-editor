@@ -59,32 +59,127 @@ We'll use:
 npm install @auth0/nextjs-auth0 @veltdev/react react-quill
 ```
 
----
-
 ### 3. Configure Auth0
 
-Create a `.env.local` file:
+Auth0 will handle user authentication, allowing users to log in and access the collaborative editor securely. To configure Auth0, do the following:
+
+#### Create an `.env.local` file
+
+Create a `.env.local` file with the following content:
 
 ```env
-AUTH0_SECRET=LONG_RANDOM_STRING
-AUTH0_BASE_URL=http://localhost:3000
-AUTH0_ISSUER_BASE_URL=https://YOUR_DOMAIN.auth0.com
-AUTH0_CLIENT_ID=YOUR_CLIENT_ID
-AUTH0_CLIENT_SECRET=YOUR_CLIENT_SECRET
+AUTH0_SECRET='LONG_RANDOM_STRING'
+APP_BASE_URL='http://localhost:3000'
+AUTH0_DOMAIN='https://YOUR_DOMAIN.auth0.com'
+AUTH0_CLIENT_ID='YOUR_CLIENT_ID'
+AUTH0_CLIENT_SECRET='YOUR_CLIENT_SECRET'
 ```
 
-Set up middleware and API routes for Auth0:
+#### Create an Auth0 Application
 
-#### `app/api/auth/[auth0]/route.ts`
+To set up Auth0, you'll need to create an application in your Auth0 dashboard. Log in to your Auth0 dashboard and on the side panel, select **Applications** > **Applications**, then click **Create Application**. Give your application a name, choose **Regular Web Application**, and click **Create**. Then select **Next.js** as the technology.
+
+Next, select **Settings** and copy the following values into your `.env.local`:
+
+- **Domain**
+- **Client ID**
+- **Client Secret**
+
+Make sure to set the **Allowed Callback URLs** to `http://localhost:3000/auth/callback`, and the **Allowed Logout URLs** to `http://localhost:3000`.
+
+#### Create the Auth0 SDK Client
+
+Create a new file `lib/auth0.ts` to handle authentication, sessions and user data:
 
 ```ts
-import { handleAuth } from "@auth0/nextjs-auth0";
+import { Auth0Client } from "@auth0/nextjs-auth0/server";
 
-export const GET = handleAuth();
-export const POST = handleAuth();
+export const auth0 = new Auth0Client();
 ```
 
----
+#### Create the Auth0 Middleware
+
+Create a new file `middleware.ts` to handle authentication middleware:
+
+```ts
+import type { NextRequest } from "next/server";
+import { auth0 } from "./lib/auth0";
+
+export async function middleware(request: NextRequest) {
+  return await auth0.middleware(request);
+}
+
+export const config = {
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+  ],
+};
+```
+
+#### Add the Sign Up and Login Buttons
+
+Update file `app/page.tsx` to handle the home page with login and signup buttons:
+
+```tsx
+import { auth0 } from "@/lib/auth0";
+import "./globals.css";
+
+export default async function Home() {
+  const session = await auth0.getSession();
+
+  if (!session) {
+    return (
+      <main className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+        <div className="text-center space-y-8 p-8 max-w-md w-full bg-white rounded-lg shadow-lg">
+          <h1 className="text-3xl font-bold text-gray-800">
+            Collaborative Editor
+          </h1>
+          <p className="text-gray-600">
+            A real-time collaborative editing platform. Work together with your
+            team in real-time.
+          </p>
+          <div className="space-y-4">
+            <a href="/auth/login?screen_hint=signup" className="block">
+              <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors">
+                Sign up
+              </button>
+            </a>
+            <a href="/auth/login" className="block">
+              <button className="w-full border border-gray-300 hover:border-gray-400 text-gray-700 font-medium py-2 px-4 rounded-md transition-colors">
+                Log in
+              </button>
+            </a>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-gray-50">
+      <div className="max-w-4xl mx-auto p-8">
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-bold text-gray-800">
+              Welcome, {session.user.name}!
+            </h1>
+            <a href="/auth/logout">
+              <button className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-md transition-colors">
+                Log out
+              </button>
+            </a>
+          </div>
+          <p className="text-gray-600">
+            Start collaborating on your documents in real-time.
+          </p>
+        </div>
+      </div>
+    </main>
+  );
+}
+```
+
+Running this code will give you a simple home page with options to log in or sign up. Once logged in, users will see a welcome message and a logout button.
 
 ### 4. Configure Velt.dev
 
@@ -96,13 +191,9 @@ VELT_PROJECT_ID=your-velt-project-id
 
 We'll initialize Velt on the client side later using this ID.
 
----
-
 ## 🛠️ Implementation
 
 Now let's build the collaborative document page.
-
----
 
 ### 1. Auth0 Integration with App Router
 
@@ -123,8 +214,6 @@ export default function RootLayout({ children }) {
   );
 }
 ```
-
----
 
 ### 2. Setup the Document Editor Page
 
@@ -182,8 +271,6 @@ export default function EditorPage() {
 }
 ```
 
----
-
 ### 3. Adding Comments via Text Selection
 
 Velt makes this straightforward using its commenting component.
@@ -210,15 +297,11 @@ This enables users to:
 
 You can enhance this later with more sophisticated comment UIs, but this is the fastest way to get started.
 
----
-
 ### 4. Presence & Cursors
 
 We already added `<VeltLiveCursors />` and `<VeltPresence />`—Velt will show live cursors with user avatars, plus indicators when people enter/leave the document.
 
 You can customize cursor color and display name via `Velt.setUser()` in your `useEffect`.
-
----
 
 ## 🧪 Testing
 
@@ -245,8 +328,6 @@ If something's not syncing, double-check:
 - That users are successfully passed to `Velt.setUser()`
 - The `VeltProvider` wraps your components properly
 
----
-
 ## 🧠 Why These Choices?
 
 **Why ReactQuill?**
@@ -265,8 +346,6 @@ If something's not syncing, double-check:
 - Handles operational transforms, presence, and comments out of the box
 - Abstracts away complex CRDT logic
 
----
-
 ## 🛡 Production Considerations
 
 A few quick notes for production-readiness:
@@ -275,8 +354,6 @@ A few quick notes for production-readiness:
 - **Data persistence:** Right now, our editor doesn't save to a backend. You'll want to connect changes to a database (e.g., via Velt's content syncing APIs or by capturing changes from the editor)
 - **Rate limiting / abuse:** Be sure to throttle comment creation and document edits if your app is public
 - **Role-based access:** Add permissions (e.g., read-only vs editor) based on Auth0 user roles
-
----
 
 ## ✅ Conclusion
 
@@ -298,8 +375,6 @@ If you're expanding this, consider:
 
 Happy building!
 
----
-
 ## 🔗 Resources
 
 - [Velt.dev Docs](https://docs.velt.dev)
@@ -307,5 +382,3 @@ Happy building!
 - [React Quill](https://github.com/zenoamaro/react-quill)
 
 Want the full codebase as a starter? Let me know, and I'll drop a GitHub repo or zip export.
-
----
