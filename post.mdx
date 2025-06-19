@@ -1,0 +1,311 @@
+# Building Real-Time Collaborative Documents with Velt.dev and Auth0 in Next.js
+
+Real-time collaboration has become a staple in modern productivity apps—from Google Docs to Figma. But building those features from scratch? It's a monumental task. Fortunately, tools like [Velt.dev](https://velt.dev) are making it easier than ever to add collaborative capabilities to your React/Next.js applications.
+
+In this tutorial, we'll walk you through the process of building a **real-time collaborative document editor** using:
+
+- **Next.js (App Router)** for the application framework
+- **Auth0** for authentication
+- **Velt.dev** for collaboration (live cursors, comments, presence)
+
+By the end of this article, you'll have a working editor where **authenticated users** can:
+
+- Edit the same document simultaneously
+- Add comments by selecting text
+- See **live cursors** of other collaborators
+- View **presence indicators** of who's in the document
+
+Let's dive in.
+
+## Why combine Velt.dev with Auth0 in a Next.js app?
+
+Many Next.js applications require user authentication, especially when dealing with sensitive data or collaborative features. Auth0 provides a robust authentication solution that integrates seamlessly with Next.js, allowing you to manage user identities securely.
+
+Velt.dev, on the other hand, specializes in real-time collaboration features like live cursors, comments, and presence. It abstracts away the complexities of real-time data synchronization, allowing developers to focus on building their applications rather than the underlying infrastructure, making it easy to add collaborative features to your app.
+
+Using Velt.dev alongside Auth0 in a Next.js application allows you to:
+
+- Leverage Auth0's secure authentication to manage user identities
+- Use Velt.dev's real-time collaboration features without reinventing the wheel
+- Provide a seamless user experience where authenticated users can collaborate in real time
+
+## ⚙️ Setup
+
+### Prerequisites
+
+Make sure you have:
+
+- A [Velt.dev](https://velt.dev) account (free tier is enough)
+- An [Auth0](https://auth0.com) account
+- Next.js project with App Router
+
+### 1. Initialize a Next.js App
+
+```bash
+npx create-next-app@latest collaborative-editor --app
+cd collaborative-editor
+npm install
+```
+
+### 2. Install Dependencies
+
+We'll use:
+
+- `@auth0/nextjs-auth0` for authentication
+- `@veltdev/react` for collaboration
+- `react-quill` as a simple rich text editor
+
+```bash
+npm install @auth0/nextjs-auth0 @veltdev/react react-quill
+```
+
+---
+
+### 3. Configure Auth0
+
+Create a `.env.local` file:
+
+```env
+AUTH0_SECRET=LONG_RANDOM_STRING
+AUTH0_BASE_URL=http://localhost:3000
+AUTH0_ISSUER_BASE_URL=https://YOUR_DOMAIN.auth0.com
+AUTH0_CLIENT_ID=YOUR_CLIENT_ID
+AUTH0_CLIENT_SECRET=YOUR_CLIENT_SECRET
+```
+
+Set up middleware and API routes for Auth0:
+
+#### `app/api/auth/[auth0]/route.ts`
+
+```ts
+import { handleAuth } from "@auth0/nextjs-auth0";
+
+export const GET = handleAuth();
+export const POST = handleAuth();
+```
+
+---
+
+### 4. Configure Velt.dev
+
+Create a project in [Velt.dev](https://velt.dev), get your **project ID**, and add it to `.env.local`:
+
+```env
+VELT_PROJECT_ID=your-velt-project-id
+```
+
+We'll initialize Velt on the client side later using this ID.
+
+---
+
+## 🛠️ Implementation
+
+Now let's build the collaborative document page.
+
+---
+
+### 1. Auth0 Integration with App Router
+
+Wrap your app in the Auth0 provider.
+
+#### `app/layout.tsx`
+
+```tsx
+import { UserProvider } from "@auth0/nextjs-auth0/client";
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en">
+      <body>
+        <UserProvider>{children}</UserProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+---
+
+### 2. Setup the Document Editor Page
+
+Create `app/editor/page.tsx`.
+
+This page:
+
+- Checks if the user is authenticated
+- Loads the Velt provider
+- Initializes collaboration features
+
+#### `app/editor/page.tsx`
+
+```tsx
+"use client";
+
+import { useUser } from "@auth0/nextjs-auth0/client";
+import { useEffect } from "react";
+import { VeltProvider, VeltPresence, VeltLiveCursors, useVelt } from "velt";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
+
+export default function EditorPage() {
+  const { user, error, isLoading } = useUser();
+
+  useEffect(() => {
+    if (user) {
+      // Pass Auth0 user data to Velt for identity tracking
+      window.Velt.setUser({
+        userId: user.sub, // unique identifier
+        name: user.name,
+        avatar: user.picture,
+        email: user.email,
+      });
+    }
+  }, [user]);
+
+  if (isLoading) return <p>Loading...</p>;
+  if (error) return <p>Error loading user.</p>;
+  if (!user) return <a href="/api/auth/login">Login</a>;
+
+  return (
+    <VeltProvider apiKey={process.env.NEXT_PUBLIC_VELT_PROJECT_ID!}>
+      <div className="p-6 max-w-4xl mx-auto">
+        <h1 className="text-2xl font-semibold mb-4">Shared Document</h1>
+
+        <div className="border rounded p-4 relative">
+          <ReactQuill theme="snow" />
+          <VeltLiveCursors />
+          <VeltPresence />
+        </div>
+      </div>
+    </VeltProvider>
+  );
+}
+```
+
+---
+
+### 3. Adding Comments via Text Selection
+
+Velt makes this straightforward using its commenting component.
+
+#### Add `VeltCommentable` wrapper:
+
+Update your `EditorPage` to wrap the editor with `VeltCommentable`.
+
+```tsx
+import { VeltCommentable } from 'velt';
+
+...
+
+<VeltCommentable id="doc-editor">
+ <ReactQuill theme="snow" />
+</VeltCommentable>
+```
+
+This enables users to:
+
+- Select text
+- Right-click or click a comment icon
+- Add inline comments
+
+You can enhance this later with more sophisticated comment UIs, but this is the fastest way to get started.
+
+---
+
+### 4. Presence & Cursors
+
+We already added `<VeltLiveCursors />` and `<VeltPresence />`—Velt will show live cursors with user avatars, plus indicators when people enter/leave the document.
+
+You can customize cursor color and display name via `Velt.setUser()` in your `useEffect`.
+
+---
+
+## 🧪 Testing
+
+1. Start the app:
+
+```bash
+npm run dev
+```
+
+2. Open **two separate incognito windows**, log in with different Auth0 accounts.
+
+3. Navigate to `/editor`
+
+You should now see:
+
+- Each other's cursors in real time
+- Presence bubbles/avatars
+- Ability to comment on text
+- Edits updating live
+
+If something's not syncing, double-check:
+
+- Your `VELT_PROJECT_ID`
+- That users are successfully passed to `Velt.setUser()`
+- The `VeltProvider` wraps your components properly
+
+---
+
+## 🧠 Why These Choices?
+
+**Why ReactQuill?**
+
+- Easy to drop in a rich text editor
+- Works well with Velt's comment overlays
+
+**Why pass Auth0 data into `Velt.setUser()`?**
+
+- Velt needs to know who each user is to track presence, comments, etc.
+- We reuse the existing Auth0 identity to avoid duplicate login systems
+
+**Why Velt for collaboration?**
+
+- Built specifically for real-time apps
+- Handles operational transforms, presence, and comments out of the box
+- Abstracts away complex CRDT logic
+
+---
+
+## 🛡 Production Considerations
+
+A few quick notes for production-readiness:
+
+- **Authentication gating:** Lock down routes on the server to prevent unauthorized access to documents
+- **Data persistence:** Right now, our editor doesn't save to a backend. You'll want to connect changes to a database (e.g., via Velt's content syncing APIs or by capturing changes from the editor)
+- **Rate limiting / abuse:** Be sure to throttle comment creation and document edits if your app is public
+- **Role-based access:** Add permissions (e.g., read-only vs editor) based on Auth0 user roles
+
+---
+
+## ✅ Conclusion
+
+{/* You now have a working collaborative document editor */}
+
+With minimal setup, you've now built a fully authenticated, real-time collaborative editor using:
+
+- **Velt.dev** for comments, presence, and cursors
+- **Auth0** for authentication
+- **Next.js 14+** for modern app structure
+
+This combination is ideal for teams building productivity tools, educational platforms, or any app where real-time collaboration matters.
+
+If you're expanding this, consider:
+
+- Richer document structures (not just plain HTML)
+- Comment threads and notifications
+- Granular document access controls
+
+Happy building!
+
+---
+
+## 🔗 Resources
+
+- [Velt.dev Docs](https://docs.velt.dev)
+- [Auth0 Next.js SDK](https://auth0.com/docs/quickstart/webapp/nextjs)
+- [React Quill](https://github.com/zenoamaro/react-quill)
+
+Want the full codebase as a starter? Let me know, and I'll drop a GitHub repo or zip export.
+
+---
