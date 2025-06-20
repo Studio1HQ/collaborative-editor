@@ -10,7 +10,7 @@ export default function useVeltAuth() {
         name: auth0User.name || "",
         email: auth0User.email || "",
         photoUrl: auth0User.picture || "",
-        organizationId: "default-org",
+        organizationId: "collaborative-editor",
         color: "#FF0000",
         textColor: "#FFFFFF",
       }

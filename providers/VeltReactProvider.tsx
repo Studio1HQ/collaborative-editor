@@ -1,5 +1,3 @@
-"use client";
-
 import { VeltProvider } from "@veltdev/react";
 import React from "react";
 

@@ -1,11 +1,14 @@
 import React, { useState } from "react";
+import AuthProvider from "@/providers/AuthProvider";
 import dynamic from "next/dynamic";
 
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 import "react-quill/dist/quill.snow.css";
-import AuthProvider from "@/providers/AuthProvider";
+import useVeltAuth from "@/hooks/useVeltAuth";
 
-function MyComponent() {
+function RichTextEditor() {
+  useVeltAuth();
+
   const [value, setValue] = useState("");
 
   return (
@@ -22,14 +25,15 @@ function MyComponent() {
   );
 }
 
-export default function Page() {
+const Page = () => {
   return (
     <AuthProvider>
       <main className="container mx-auto p-4">
         <h1 className="text-2xl font-semibold mb-4">Shared Document</h1>
 
-        <MyComponent />
+        <RichTextEditor />
       </main>
     </AuthProvider>
   );
-}
+};
+export default Page;

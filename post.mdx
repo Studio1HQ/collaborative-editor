@@ -133,12 +133,11 @@ The matcher pattern excludes static assets while protecting all other routes.
 
 ### Home Page with Auth0
 
-Update file `app/page.tsx` to handle the home page with login and signup buttons:
+Update file `pages/index.tsx` to handle the home page with login and signup buttons:
 
 ```tsx
-// app/page.tsx
+// pages/index.tsx
 import { auth0 } from "@/lib/auth0";
-import "./globals.css";
 import Link from "next/link";
 
 export default async function Home() {
@@ -211,7 +210,6 @@ To protect routes and ensure only authenticated users can access certain pages, 
 
 ```tsx
 // providers/AuthProvider.tsx
-"use client";
 import { useUser } from "@auth0/nextjs-auth0";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -237,11 +235,10 @@ export default function AuthProvider({
 }
 ```
 
-Use this AuthProvider to wrap any page that requires authentication. For example, in your `app/editor/page.tsx`, you can use it like this:
+Use this AuthProvider to wrap any page that requires authentication. For example, in your `pages/editors.tsx`, you can use it like this:
 
 ```tsx
-// app/editor/page.tsx
-"use client";
+// pages/editors.tsx
 import AuthProvider from "@/providers/AuthProvider";
 
 const Page = () => {
@@ -275,8 +272,6 @@ The VeltProvider component initializes the Velt client and manages the real-time
 
 ```tsx
 // providers/VeltReactProvider.tsx
-"use client";
-
 import { VeltProvider } from "@veltdev/react";
 import React from "react";
 
@@ -298,20 +293,17 @@ export default VeltReactProvider;
 This provider should wrap your application root to ensure Velt's features are available throughout your component tree:
 
 ```tsx
-// app/layout.tsx
+// _app.tsx
+import type { AppProps } from "next/app";
 import VeltReactProvider from "@/providers/VeltReactProvider";
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function App({ Component, pageProps }: AppProps) {
   return (
-    <html lang="en">
-      <body>
-        <VeltReactProvider>{children}</VeltReactProvider>
-      </body>
-    </html>
+    <div>
+      <VeltReactProvider>
+        <Component {...pageProps} />
+      </VeltReactProvider>
+    </div>
   );
 }
 ```
