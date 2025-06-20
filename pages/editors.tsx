@@ -9,7 +9,31 @@ import useVeltAuth from "@/hooks/useVeltAuth";
 function RichTextEditor() {
   useVeltAuth();
 
-  const [value, setValue] = useState("");
+  const defaultValue = `<h1>Welcome to the Collaborative Editor</h1>
+  <p>
+    This is a <strong>rich text editor</strong> built with React and Next.js. You can use it to write and format your documents in real-time with your team.
+  </p>
+  <h2>Features</h2>
+  <ul>
+    <li>Edit text with <b>bold</b>, <i>italic</i>, and <u>underline</u></li>
+    <li>Create <a href="https://nextjs.org" target="_blank">links</a> and lists</li>
+    <li>Insert <code>inline code</code> and <mark>highlighted text</mark></li>
+    <li>Write <blockquote>block quotes</blockquote> and code blocks:</li>
+  </ul>
+  <pre><code>function helloWorld() {
+    console.log("Hello, world!");
+  }</code></pre>
+  <h3>Example List</h3>
+  <ol>
+    <li>First step</li>
+    <li>Second step</li>
+    <li>Third step</li>
+  </ol>
+  <p>
+    Try editing this article, add your own content, or experiment with the formatting options above. This editor supports collaborative editing, so you can work together with others in real-time. Enjoy exploring all the features!
+  </p>`;
+
+  const [value, setValue] = useState(defaultValue);
 
   return (
     <div className="flex flex-col md:flex-row gap-8 mt-8 h-[calc(100vh-8rem)]">
