@@ -42,7 +42,7 @@ const Page = ({ session }: { session: SessionData | null }) => {
               Welcome, {session?.user?.name}!
             </h1>
             <div className="flex gap-4">
-              <Link href="/editors">
+              <Link href="/editor">
                 <button className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors">
                   Go to Editors
                 </button>
