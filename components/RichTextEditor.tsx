@@ -1,57 +1,39 @@
-"use client";
+import React, { useState } from "react";
+import dynamic from "next/dynamic";
+import useVeltAuth from "@/hooks/useVeltAuth";
 
-import React, {
-  useEffect,
-  useRef,
-  forwardRef,
-  useImperativeHandle,
-} from "react";
-import Quill from "quill";
-import "quill/dist/quill.snow.css"; // Import Quill styles
+const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
+import "react-quill/dist/quill.snow.css";
 
-// Define the ref type for the RichTextEditor component
-export type RichTextEditorHandle = {
-  getContent: () => string;
+const RichTextEditor = () => {
+  useVeltAuth();
+
+  const [value, setValue] = useState("");
+
+  return (
+    <div className="flex flex-col md:flex-row gap-8 mt-8 h-[calc(100vh-8rem)]">
+      <section className="flex-1 md:w-[50%] bg-white rounded-lg shadow-lg p-6 flex flex-col">
+        <h2 className="text-lg font-semibold mb-4 text-gray-700">Editor</h2>
+        <div className="flex-1 max-h-full overflow-auto">
+          <ReactQuill
+            theme="snow"
+            value={value}
+            onChange={setValue}
+            style={{ height: "100%" }}
+          />
+        </div>
+      </section>
+      <section className="flex-1  md:w-[50%] bg-white rounded-lg shadow-lg p-6 flex flex-col">
+        <h2 className="text-lg font-semibold mb-4 text-gray-700">Preview</h2>
+        <div className="flex-1 min-h-0 max-h-full overflow-auto max-w-none border-2 p-4 rounded-sm border-gray-200">
+          <div
+            className="editor-output"
+            dangerouslySetInnerHTML={{ __html: value }}
+          />
+        </div>
+      </section>
+    </div>
+  );
 };
 
-const RichTextEditor = forwardRef<RichTextEditorHandle>((_, ref) => {
-  const editorRef = useRef<HTMLDivElement>(null);
-  const quillRef = useRef<Quill | null>(null);
-
-  useEffect(() => {
-    if (editorRef.current) {
-      quillRef.current = new Quill(editorRef.current, {
-        theme: "snow",
-        modules: {
-          toolbar: [
-            [{ header: [1, 2, 3, false] }],
-            ["bold", "italic", "underline", "strike"],
-            [{ list: "ordered" }, { list: "bullet" }],
-            ["link", "image"],
-            ["clean"],
-          ],
-        },
-        placeholder: "Write something...",
-      });
-    }
-
-    return () => {
-      quillRef.current = null; // Cleanup to avoid memory leaks
-    };
-  }, []);
-
-  // Expose the getContent function to the parent component
-  useImperativeHandle(ref, () => ({
-    getContent: () => {
-      if (quillRef.current) {
-        return quillRef.current.root.innerHTML; // Return the HTML content
-      }
-      return "";
-    },
-  }));
-
-  return <div ref={editorRef} style={{ height: "300px" }} />;
-});
-
-RichTextEditor.displayName = "RichTextEditor";
 export default RichTextEditor;
