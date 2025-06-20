@@ -17,3 +17,111 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.editor-output h1,
+.editor-output h2,
+.editor-output h3,
+.editor-output h4,
+.editor-output h5,
+.editor-output h6 {
+  font-weight: bold;
+  margin: 1em 0 0.5em 0;
+  color: #1e293b;
+}
+
+.editor-output h1 {
+  font-size: 2rem;
+}
+.editor-output h2 {
+  font-size: 1.5rem;
+}
+.editor-output h3 {
+  font-size: 1.25rem;
+}
+.editor-output h4 {
+  font-size: 1.1rem;
+}
+.editor-output h5 {
+  font-size: 1rem;
+}
+.editor-output h6 {
+  font-size: 0.95rem;
+}
+
+.editor-output ul,
+.editor-output ol {
+  margin: 1em 0 1em 2em;
+  padding-left: 1.5em;
+}
+
+.editor-output ul {
+  list-style-type: disc;
+}
+
+.editor-output ol {
+  list-style-type: decimal;
+}
+
+.editor-output li {
+  margin-bottom: 0.25em;
+}
+
+.editor-output blockquote {
+  border-left: 4px solid #3b82f6;
+  background: #f1f5f9;
+  color: #334155;
+  margin: 1em 0;
+  padding: 0.5em 1em;
+  font-style: italic;
+}
+
+.editor-output pre {
+  background: #f3f4f6;
+  color: #334155;
+  padding: 1em;
+  border-radius: 0.5em;
+  overflow-x: auto;
+  margin: 1em 0;
+}
+
+.editor-output code {
+  background: #e0e7ef;
+  color: #0f172a;
+  padding: 0.2em 0.4em;
+  border-radius: 0.3em;
+  font-size: 0.95em;
+}
+
+.editor-output p {
+  margin: 0.5em 0;
+  line-height: 1.7;
+}
+
+.editor-output a {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.editor-output img {
+  max-width: 100%;
+  border-radius: 0.5em;
+  margin: 1em 0;
+}
+
+.editor-output table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+}
+
+.editor-output th,
+.editor-output td {
+  border: 1px solid #cbd5e1;
+  padding: 0.5em 1em;
+  text-align: left;
+}
+
+.editor-output th {
+  background: #f1f5f9;
+  font-weight: bold;
+}
