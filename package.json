@@ -12,8 +12,8 @@
     "@auth0/nextjs-auth0": "^4.6.1",
     "@veltdev/react": "^4.5.0-beta.30",
     "next": "15.3.4",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
     "react-quill": "^2.0.0"
   },
   "devDependencies": {
