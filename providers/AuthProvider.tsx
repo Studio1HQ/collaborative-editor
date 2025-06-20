@@ -16,7 +16,13 @@ export default function AuthProvider({
     }
   }, [user, isLoading, router]);
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 text-gray-700">
+        Loading...
+      </div>
+    );
+
   if (!user) return null;
 
   return <>{children}</>;

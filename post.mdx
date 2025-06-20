@@ -137,13 +137,14 @@ Update file `pages/index.tsx` to handle the home page with login and signup butt
 
 ```tsx
 // pages/index.tsx
-import { auth0 } from "@/lib/auth0";
 import Link from "next/link";
+import React from "react";
+import { useUser } from "@auth0/nextjs-auth0";
 
-export default async function Home() {
-  const session = await auth0.getSession();
+const Page = () => {
+  const { user, isLoading } = useUser();
 
-  if (!session) {
+  if (!user && !isLoading) {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
         <div className="text-center space-y-8 p-8 max-w-md w-full bg-white rounded-lg shadow-lg">
@@ -177,10 +178,10 @@ export default async function Home() {
         <div className="bg-white rounded-lg shadow-lg p-6">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold text-gray-800">
-              Welcome, {session.user.name}!
+              Welcome, {user?.name}!
             </h1>
             <div className="flex gap-4">
-              <Link href="/editors">
+              <Link href="/editor">
                 <button className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors">
                   Go to Editors
                 </button>
@@ -199,7 +200,9 @@ export default async function Home() {
       </div>
     </main>
   );
-}
+};
+
+export default Page;
 ```
 
 Running this code will give you a simple home page with options to log in or sign up. Once logged in, users will see a welcome message, a button to go to the editors page, and a logout button.
@@ -228,7 +231,13 @@ export default function AuthProvider({
     }
   }, [user, isLoading, router]);
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 text-gray-700">
+        Loading...
+      </div>
+    );
+
   if (!user) return null;
 
   return <>{children}</>;
@@ -253,6 +262,14 @@ export default Page;
 ```
 
 This ensures that unauthenticated users are redirected to the home page where they can log in. You can test this by trying to access the `/editor` page without being logged in.
+
+## Quill Editor Setup
+
+To build a collaborative document editor, we need a rich text editor that supports real-time updates. For this, we will use React Quill, which is a React wrapper for the Quill rich text editor.
+
+### Building the Editor Component
+
+Update the `pages/editor.tsx` file to include the React Quill editor. This will be the main component where users can edit documents collaboratively.
 
 ## Velt.dev Integration
 
