@@ -512,110 +512,166 @@ export default Page;
 
 With these components, you have a modular, collaborative editor interface ready for real-time features and user management.
 
-### Comments Feature
+## Adding Real-Time Collaboration with Velt
 
-To enable comments, wrap the editor component with `VeltCommentable`:
+Now that we have a basic editor setup, let's integrate Velt.dev to enable real-time collaboration features like live comments, and presence tracking.
+
+### Identify the current user with Velt
+
+To identify the current user in Velt, you can use the `useVeltClient()` method. This should be done after the user is authenticated and you have their information.
 
 ```tsx
-import { VeltCommentable } from 'velt';
+// components/RichTextEditor.tsx
+import { useEffect } from "react";
+import { useUser } from "@auth0/nextjs-auth0";
+import { useVeltClient } from "@veltdev/react";
 
-...
+const { user: auth0User } = useUser();
+const { client } = useVeltClient();
 
-<VeltCommentable id="doc-editor">
- <ReactQuill theme="snow" />
-</VeltCommentable>
+useEffect(() => {
+  const veltUser = auth0User
+    ? {
+        userId: auth0User.sub || "",
+        name: auth0User.name || "",
+        email: auth0User.email || "",
+        photoUrl: auth0User.picture || "",
+        organizationId: "collaborative-editor",
+        color: "#FF0000",
+        textColor: "#FFFFFF",
+      }
+    : null;
+
+  const initVelt = async () => {
+    if (client && veltUser) {
+      await client.identify(veltUser);
+    }
+  };
+
+  initVelt().catch(console.error);
+}, [client, auth0User]);
 ```
 
-This enables users to:
+### Set up the document ID for comments
 
-- Select text
-- Right-click or click a comment icon
-- Add inline comments
+A document in Velt is a shared space where users can collaborate in real-time. To enable comments and real-time updates, we need to define a unique document ID. This ID will be used by Velt to track changes and comments for this specific document.
 
-You can enhance this later with more sophisticated comment UIs, but this is the fastest way to get started.
+```tsx
+// components/RichTextEditor.tsx
+useEffect(() => {
+  if (client) {
+    client.setDocument("collaborative-post", {
+      documentName: "Welcome to the Collaborative Editor",
+    });
+  }
+}, [client]);
+```
 
-### Presence & Cursors
+### Adding Comments, Presence and Notifications
 
-We already added `<VeltLiveCursors />` and `<VeltPresence />`—Velt will show live cursors with user avatars, plus indicators when people enter/leave the document.
+Velt provides built-in support for comments, presence, and notifications. They provide you with different components to handle these features easily. For our editor, we will be using the following components:
 
-You can customize cursor color and display name via `Velt.setUser()` in your `useEffect`.
+- VeltNotificationsTool: This displays real-time notifications for comments and mentions.
+- VeltCommentTool: This allows users to add comments on selected text.
+- VeltComments: This displays all the comments on the document.
+- VeltPresence: This shows the avatars for users currently collaborating on the document.
+- VeltSidebarButton: This is a button to toggle the comments sidebar.
+- VeltCommentsSidebar: This displays the comments sidebar with all comments and allows users to reply to comments.
 
-## Testing
+It is important to note that you have to enable notifications in your console for the VeltNotificationsTool to work. You can do that by going to the "In-app Notifications" section in your Velt dashboard, then enable notifications for your application. Feel. free to customize it to your liking.
 
-1. Start the app:
+Now, let's integrate these components into our `editor` page:
+
+```tsx
+// pages/editor.tsx
+import {
+  VeltNotificationsTool,
+  VeltCommentTool,
+  VeltComments,
+  VeltPresence,
+  VeltSidebarButton,
+  VeltCommentsSidebar,
+} from "@veltdev/react";
+
+const Page = () => {
+  return (
+    <AuthProvider>
+      <main className="min-h-screen bg-gray-50 py-10">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col gap-y-3 gap-x-6 md:flex-row justify-between items-start mb-6">
+            <div>
+              <h1 className="text-3xl font-extrabold text-blue-700 drop-shadow">
+                Shared Document Editor
+              </h1>
+              <div className="flex items-center justify-start mb-4">
+                <p className="mr-2 font-semibold text-gray-600">Viewers:</p>
+                <VeltPresence />
+              </div>
+            </div>
+            <div className="flex justify-end items-center space-x-4">
+              <VeltCommentTool />
+              <VeltNotificationsTool />
+              <UserDropdown />
+            </div>
+          </div>
+          <RichTextEditor />
+        </div>
+
+        <div className="fixed bottom-10 right-10 z-50 space-y-4">
+          <VeltSidebarButton />
+          <VeltCommentsSidebar pageMode={true} />
+          <VeltComments />
+        </div>
+      </main>
+    </AuthProvider>
+  );
+};
+export default Page;
+```
+
+## Testing the Collaborative Editor
+
+To test the features we just implemented, lets go to the `/editor` page and ensure everything is working as expected.
+
+1. Start your Next.js app:
 
 ```bash
 npm run dev
 ```
 
-2. Open **two separate incognito windows**, log in with different Auth0 accounts.
-
-3. Navigate to `/editor`
+2. Open your browser and navigate to `http://localhost:3000`.
+3. Open **two separate incognito windows**, log in with different Auth0 accounts.
+4. Navigate to `/editor`
 
 You should now see:
 
-- Each other's cursors in real time
-- Presence bubbles/avatars
-- Ability to comment on text
-- Edits updating live
+- both user's avatar icons in the top left corner of the page
+- the rich text editor where both users can type and see each other's changes in real-time
+- the comments tool that allows users to select text and add comments
+- the notifications tool that shows real-time notifications for comments and mentions
+- the comments sidebar that displays all comments and allows users to reply to them
 
-If something's not syncing, double-check:
+5. Try selecting text and adding comments. You should see the comments appear in real-time for both users.
+6. Check the notifications tool to see if you receive notifications for comments and mentions.
 
-- Your `VELT_PROJECT_ID`
-- That users are successfully passed to `Velt.setUser()`
-- The `VeltProvider` wraps your components properly
+Because Velt handles the real-time updates, presence, and comments, you don't need to worry about implementing these features from scratch. Velt takes care of the heavy lifting, allowing you to focus on building your application.
 
-## Why These Choices?
+## Next Steps
 
-**Why ReactQuill?**
+Now that you have a basic collaborative editor with real-time features, you can consider the following enhancements:
 
-- Easy to drop in a rich text editor
-- Works well with Velt's comment overlays
-
-**Why pass Auth0 data into `Velt.setUser()`?**
-
-- Velt needs to know who each user is to track presence, comments, etc.
-- We reuse the existing Auth0 identity to avoid duplicate login systems
-
-**Why Velt for collaboration?**
-
-- Built specifically for real-time apps
-- Handles operational transforms, presence, and comments out of the box
-- Abstracts away complex CRDT logic
-
-## Production Considerations
-
-A few quick notes for production-readiness:
-
-- **Authentication gating:** Lock down routes on the server to prevent unauthorized access to documents
-- **Data persistence:** Right now, our editor doesn't save to a backend. You'll want to connect changes to a database (e.g., via Velt's content syncing APIs or by capturing changes from the editor)
-- **Rate limiting / abuse:** Be sure to throttle comment creation and document edits if your app is public
-- **Role-based access:** Add permissions (e.g., read-only vs editor) based on Auth0 user roles
+- **Backend Sync**: Currently, when one user makes changes to the document, those changes are not persisted or shared with other users. You can implement a backend sync mechanism to save the document state to a database.
+- **Advanced Text Editor**: Currently, we are using a basic rich text editor. You can enhance it with more features like image uploads, formatting options, and more.
+- **Markdown Support**: If you want to support Markdown or other text formats, you can integrate a library that converts between rich text and Markdown.
+- **Follow Mode**: Implement a follow mode where one user can follow another user's cursor in real-time, similar to how Google Docs works.
+- **Document History**: Implement a version history feature that allows users to view and revert to previous versions of the document.
 
 ## Conclusion
 
-{/* You now have a working collaborative document editor */}
+In this tutorial, we built a real-time collaborative document editor using Next.js, Auth0, and Velt.dev. We covered how to set up authentication with Auth0, integrate Velt for real-time collaboration, and create a rich text editor with comments and presence features.
 
-With minimal setup, you've now built a fully authenticated, real-time collaborative editor using:
+By leveraging Velt.dev's infrastructure, we avoided the complexities of building real-time collaboration features from scratch, allowing us to focus on building a great user experience.
 
-- **Velt.dev** for comments, presence, and cursors
-- **Auth0** for authentication
-- **Next.js 14+** for modern app structure
+This setup provides a solid foundation for building collaborative applications, and you can extend it further based on your requirements. Whether you're building a simple note-taking app or a complex document editor, Velt.dev and Auth0 make it easier to implement real-time collaboration features without reinventing the wheel.
 
-This combination is ideal for teams building productivity tools, educational platforms, or any app where real-time collaboration matters.
-
-If you're expanding this, consider:
-
-- Richer document structures (not just plain HTML)
-- Comment threads and notifications
-- Granular document access controls
-
-Happy building!
-
-## Resources
-
-- [Velt.dev Docs](https://docs.velt.dev)
-- [Auth0 Next.js SDK](https://auth0.com/docs/quickstart/webapp/nextjs)
-- [React Quill](https://github.com/zenoamaro/react-quill)
-
-Want the full codebase as a starter? Let me know, and I'll drop a GitHub repo or zip export.
+You can find the full codebase on GitHub to get started quickly. Feel free to customize the editor, add more features, and make it your own!

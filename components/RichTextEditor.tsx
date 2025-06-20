@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import { useUser } from "@auth0/nextjs-auth0";
+import { useVeltClient } from "@veltdev/react";
 
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 import "react-quill/dist/quill.snow.css";
@@ -30,6 +32,41 @@ const RichTextEditor = () => {
     </p>`;
 
   const [value, setValue] = useState(defaultValue);
+
+  const { user: auth0User } = useUser();
+  const { client } = useVeltClient();
+
+  // Initialize Velt with current user
+  useEffect(() => {
+    const veltUser = auth0User
+      ? {
+          userId: auth0User.sub || "",
+          name: auth0User.name || "",
+          email: auth0User.email || "",
+          photoUrl: auth0User.picture || "",
+          organizationId: "collaborative-editor",
+          color: "#FF0000",
+          textColor: "#FFFFFF",
+        }
+      : null;
+
+    const initVelt = async () => {
+      if (client && veltUser) {
+        await client.identify(veltUser);
+      }
+    };
+
+    initVelt().catch(console.error);
+  }, [client, auth0User]);
+
+  // Set document ID
+  useEffect(() => {
+    if (client) {
+      client.setDocument("collaborative-post", {
+        documentName: "Welcome to the Collaborative Editor",
+      });
+    }
+  }, [client]);
 
   return (
     <div className="flex flex-col md:flex-row gap-8 mt-8 h-[calc(100vh-8rem)]">
