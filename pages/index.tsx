@@ -1,9 +1,10 @@
 import { auth0 } from "@/lib/auth0";
 import Link from "next/link";
+import React from "react";
+import { GetServerSidePropsContext } from "next";
+import { SessionData } from "@auth0/nextjs-auth0/types";
 
-export default async function Home() {
-  const session = await auth0.getSession();
-
+const Page = ({ session }: { session: SessionData | null }) => {
   if (!session) {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
@@ -38,7 +39,7 @@ export default async function Home() {
         <div className="bg-white rounded-lg shadow-lg p-6">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold text-gray-800">
-              Welcome, {session.user.name}!
+              Welcome, {session?.user?.name}!
             </h1>
             <div className="flex gap-4">
               <Link href="/editors">
@@ -60,4 +61,11 @@ export default async function Home() {
       </div>
     </main>
   );
+};
+
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const session = await auth0.getSession(context.req);
+  return { props: { session } };
 }
+
+export default Page;
