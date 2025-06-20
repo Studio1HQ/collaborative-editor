@@ -1,14 +1,11 @@
 import React, { useState } from "react";
 import dynamic from "next/dynamic";
-import useVeltAuth from "@/hooks/useVeltAuth";
 
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 import "react-quill/dist/quill.snow.css";
 
 const RichTextEditor = () => {
-  useVeltAuth();
-
-    const defaultValue = `<h1>Welcome to the Collaborative Editor</h1>
+  const defaultValue = `<h1>Welcome to the Collaborative Editor</h1>
     <p>
       This is a <strong>rich text editor</strong> built with React and Next.js. You can use it to write and format your documents in real-time with your team.
     </p>

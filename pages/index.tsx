@@ -1,9 +1,11 @@
 import Link from "next/link";
 import React from "react";
 import { useUser } from "@auth0/nextjs-auth0";
+import useVeltAuth from "@/hooks/useVeltAuth";
 
 const Page = () => {
   const { user, isLoading } = useUser();
+  useVeltAuth();
 
   if (!user && !isLoading) {
     return (
