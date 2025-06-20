@@ -7,6 +7,21 @@ const Page = () => {
   const { user, isLoading } = useUser();
   useVeltAuth();
 
+  // useEffect(() => {
+  //   if (user) {
+  //     fetch("/api/sync-velt-user", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({
+  //         userId: user.sub,
+  //         name: user.name,
+  //         email: user.email,
+  //         photoUrl: user.picture,
+  //       }),
+  //     });
+  //   }
+  // }, [user]);
+
   if (!user && !isLoading) {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
