@@ -10,16 +10,11 @@ Please give this repo a ⭐ if it was helpful to you.
 
 - [Next.js Velt App Using Auth0](#nextjs-velt-app-using-auth0)
   - [Table of Contents](#table-of-contents)
-  - [Demo](#demo)
   - [Features](#features)
   - [Prerequisites](#prerequisites)
   - [Getting Started](#getting-started)
   - [Tech Stack](#tech-stack)
   - [License](#license)
-
-## Demo
-
-<https://github.com/user-attachments/assets/fcf8a8e1-acbf-482e-9f91-b2e29a8b2cbb>
 
 ## Features
 
