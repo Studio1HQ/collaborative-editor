@@ -29,6 +29,7 @@ const Page = () => {
             <div className="flex justify-end items-center space-x-4">
               <VeltCommentTool />
               <VeltNotificationsTool />
+              <VeltSidebarButton />
               <UserDropdown />
             </div>
           </div>
@@ -36,7 +37,6 @@ const Page = () => {
         </div>
 
         <div className="fixed bottom-10 right-10 z-50 space-y-4">
-          <VeltSidebarButton />
           <VeltCommentsSidebar pageMode={true} />
           <VeltComments />
         </div>
